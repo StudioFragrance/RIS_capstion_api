@@ -1,44 +1,36 @@
-version: '3.8'
+version: "3"
 
 services:
-  web:
-    build: ./project
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.0.0
+    restart: always
+    hostname: zookeeper
+    container_name: zookeeper
+    environment:
+      - ZOOKEEPER_SERVER_ID=1
+      - ZOOKEEPER_CLIENT_PORT=2181
+      - ZOOKEEPER_TICK_TIME=2000
+    networks:
+      - rpc_net
+
+  broker:
+    image: confluentinc/cp-kafka:7.0.0
+    restart: always
+    container_name: broker
     ports:
-      - 8004:8000
-    command: uvicorn main:app --host 0.0.0.0 --reload
-    volumes:
-      - ./project:/usr/src/app
-    environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - "9092:9092"
     depends_on:
-      - redis
-
-  worker:
-    build: ./project
-    command: celery -A worker.celery worker --loglevel=info --logfile=logs/celery.log
-    volumes:
-      - ./project:/usr/src/app
+      - zookeeper
     environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-    depends_on:
-      - web
-      - redis
+      - KAFKA_BROKER_ID=1
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://broder:29092
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
+      - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
+    networks:
+      - rpc_net
 
-  redis:
-    image: redis:7
-
-  dashboard:
-    build: ./project
-    
-    command: celery --broker=redis://redis:6379/0 flower --port=5555
-    ports:
-      - 5556:5555
-    environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-    depends_on:
-      - web
-      - redis
-      - worker
+networks:
+  rpc_net:
