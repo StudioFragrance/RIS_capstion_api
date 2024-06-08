@@ -1,6 +1,4 @@
 import argparse
-import os
-import sys
 
 from PIL import Image, ImageDraw, ImageFont
 from transformers import BlipProcessor, BlipForConditionalGeneration

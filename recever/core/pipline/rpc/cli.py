@@ -1,11 +1,11 @@
-import sys
 import importlib
 import traceback
+from multiprocessing import Process
+
+from kafka.errors import NoBrokersAvailable
 from rich.console import Console
 from rich.prompt import Prompt
-from multiprocessing import Process
 from rpc.message_broker import MessageBroker
-from kafka.errors import NoBrokersAvailable
 
 
 def main():

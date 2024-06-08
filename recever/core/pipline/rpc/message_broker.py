@@ -1,9 +1,9 @@
-import time
 import asyncio
+import time
 import traceback
+
 import msgpack
 from kafka import KafkaProducer, KafkaConsumer, TopicPartition
-
 
 ERROR_CODE_MESSAGES = {
     -32700: "Parse error",

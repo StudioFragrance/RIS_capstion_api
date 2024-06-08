@@ -1,5 +1,3 @@
-import json
-
 from recever.utils.ImageCaption.image_caption import get_image_caption
 from recever.utils.gpt import make_response
 from recever.utils.image_util import get_image_from_url
