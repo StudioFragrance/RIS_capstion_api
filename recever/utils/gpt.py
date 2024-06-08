@@ -15,13 +15,11 @@ client = OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY"),
 )
 
-def make_prompt(caption: str, json: list, user_text: str) -> str:
+
+def make_prompt(caption: str, user_text: str) -> str:
     return (f"""
     [이미지 분석]
     {caption}
-    
-    [사용자 표정분석]
-    {str(json)}
     
     [고객의 취향]
     {user_text}
@@ -34,12 +32,12 @@ def make_prompt(caption: str, json: list, user_text: str) -> str:
     """ + """
     ```
     {
-       고객의 특성 :
-       추천 어코드 :
-       선호도 : {
-          향기의 Note 종류 : {
-             Level : 
-             Reason : 
+       "고객의 특성" :
+       "추천 어코드" :
+       "선호도" : {
+          "향기의 Note 종류" : {
+             "Level" : 
+             "Reason" : 
           }
        }
     }
@@ -47,7 +45,7 @@ def make_prompt(caption: str, json: list, user_text: str) -> str:
     """)
 
 
-def make_response(caption: str, json: list, user_text: str):
+def make_response(caption: str, user_text: str):
     response = client.chat.completions.create(
         messages=[
             {
@@ -56,12 +54,11 @@ def make_response(caption: str, json: list, user_text: str):
             },
             {
                 "role": "user",
-                "content": make_prompt(caption, json, user_text),
+                "content": make_prompt(caption, user_text),
             }
         ],
         model="gpt-3.5-turbo",
     )
-    time.sleep(2000)
     return str(response.choices[0].message.content)
 
 

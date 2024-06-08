@@ -5,7 +5,7 @@ from starlette.config import Config
 
 from core.pipline.rpc.message_broker import MessageBroker
 
-config = Config('../.env')
+config = Config('.env')
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
