@@ -13,7 +13,7 @@ port = 9092
 
 broker = MessageBroker(f"{host}:{port}")
 
-config = Config('.env')
+config = Config('../.env')
 
 router = APIRouter(
     prefix="/tasks",
@@ -65,8 +65,11 @@ def run_all_task(file: UploadFile, story: str) -> JSONResponse:
 
     with open(img_path, "wb") as buffer:
         buffer.write(file.file.read())
-
-    return broker.rpc(config('TOPIC_NAME'), "get_gpt_response_from_image", img_path, story)
+    
+    data = broker.rpc(config('TOPIC_NAME'), "get_gpt_response_from_image", img_path, story)
+    data = data.replace('`', '').replace('json', '').split('\n\n\n')[0]
+    
+    return Response(content=data, media_type="application/json")
 
 
 @router.post("/img", status_code=201)
