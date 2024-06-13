@@ -13,7 +13,7 @@ port = 9092
 
 broker = MessageBroker(f"{host}:{port}")
 
-config = Config('.env')
+config = Config('../.env')
 
 router = APIRouter(
     prefix="/tasks",
@@ -65,8 +65,11 @@ def run_all_task(file: UploadFile, story: str) -> JSONResponse:
 
     with open(img_path, "wb") as buffer:
         buffer.write(file.file.read())
-
-    return broker.rpc(config('TOPIC_NAME'), "get_gpt_response_from_image", img_path, story)
+    
+    data = broker.rpc(config('TOPIC_NAME'), "get_gpt_response_from_image", img_path, story)
+    data = data.replace('json', '').split('```')[1]
+    
+    return Response(content=data, media_type="application/json")
 
 
 @router.post("/img", status_code=201)
@@ -101,7 +104,7 @@ def get_gpt_response(story: str, img_caption: str) -> JSONResponse:
         이미지 캡션, 감정 및 사용자 텍스트를 사용하여 GPT-API를 사용하여 응답을 생성합니다.
     '''
     data = broker.rpc(config('TOPIC_NAME'), "get_gpt_response", story, img_caption)
-    data = data.replace('`', '').replace('json', '').split('\n\n\n')[0]
+    data = data.replace('json', '').split('```')[1]
 
     return Response(content=data, media_type="application/json")
 
