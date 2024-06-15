@@ -20,9 +20,6 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 origins = [
-    "http://mskiosk.swdev.kr",
-    "http://localhost",
-    "http://localhost:8080",
     "*"
 ]
 
