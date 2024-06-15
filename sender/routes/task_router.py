@@ -1,8 +1,10 @@
-import hashlib
 import os
-from pathlib import Path
+import re
+import json
+import hashlib
 
-from fastapi import APIRouter, UploadFile, Response
+from pathlib import Path
+from fastapi import APIRouter, UploadFile, Response, HTTPException
 from fastapi.responses import JSONResponse
 from starlette.config import Config
 
@@ -28,6 +30,14 @@ def get_path(file_name: str):
     h.update(file_name.encode("utf-8"))
 
     return os.path.abspath(f"./file/{h.hexdigest()}")
+    # return os.path.abspath(f'./file/{file_name}')
+
+
+def extract_json(text):
+    json_str = re.search(r'({.*})', text, re.DOTALL).group(1)
+    json_data = json.loads(json_str)
+    
+    return json_data
 
 
 @router.post("/", status_code=201)
@@ -66,10 +76,12 @@ def run_all_task(file: UploadFile, story: str) -> JSONResponse:
     with open(img_path, "wb") as buffer:
         buffer.write(file.file.read())
     
-    data = broker.rpc(config('TOPIC_NAME'), "get_gpt_response_from_image", img_path, story)
-    data = data.replace('json', '').split('```')[1]
-    
-    return Response(content=data, media_type="application/json")
+    try:
+        data = broker.rpc(config('TOPIC_NAME'), "get_gpt_response_from_image", img_path, story)
+    except:
+        raise HTTPException(status_code=400, detail="잘못된 파일")
+
+    return extract_json(data)
 
 
 @router.post("/img", status_code=201)
@@ -88,8 +100,10 @@ def get_image_info(file: UploadFile):
     with open(img_path, "wb") as buffer:
         buffer.write(file.file.read())
 
-    return broker.rpc(config('TOPIC_NAME'), "get_image_info", img_path)
-
+    try:
+        return broker.rpc(config('TOPIC_NAME'), "get_image_info", img_path)
+    except:
+        raise HTTPException(status_code=400, detail="잘못된 파일")
 
 @router.post("/gpt", status_code=201)
 def get_gpt_response(story: str, img_caption: str) -> JSONResponse:
@@ -104,7 +118,5 @@ def get_gpt_response(story: str, img_caption: str) -> JSONResponse:
         이미지 캡션, 감정 및 사용자 텍스트를 사용하여 GPT-API를 사용하여 응답을 생성합니다.
     '''
     data = broker.rpc(config('TOPIC_NAME'), "get_gpt_response", story, img_caption)
-    data = data.replace('json', '').split('```')[1]
-
-    return Response(content=data, media_type="application/json")
-
+    
+    return extract_json(data)
